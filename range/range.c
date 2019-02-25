@@ -18,10 +18,6 @@ int main(int argc, char** argv) {
 
     uint64_t* bounds = parseBounds(argv[1]);
 
-    printf("%lu to %lu\n", bounds[0], bounds[1]);
-
-    //return 0;
-
     while(!feof(fp)) {
         bufc = fgetc(fp);
         if(bufc == '\n') line++;
