@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
+#include <string.h>
 
 #ifdef __DEBUG__
 #define DEBUG(m...) fprintf(stderr, m)
@@ -24,6 +25,7 @@ typedef struct {
 } _labelList;
 
 extern int64_t regX, regY, regZ;
+extern _labelList labels;
 
 extern void push(FILE*);
 extern void swap(FILE*);

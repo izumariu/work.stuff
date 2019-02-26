@@ -41,11 +41,25 @@ int main(int argc, char** argv) {
             case 'x': DEBUG("calling swap()"); swap(fp); break;
             case 'X': DEBUG("calling swap()"); swap(fp); break;
             case '}': DEBUG("calling label()"); label(fp); break;
-            default: DEBUG("nothing happening");
+            case '|': DEBUG("calling _geti()"); _geti(); break;
+            case '!': DEBUG("calling _getc()"); _getc(); break;
+            case '%': DEBUG("calling _puti()"); _puti(); break;
+            case '$': DEBUG("calling _putc()"); _putc(); break;
+            case '~': DEBUG("calling rollRL()"); rollRL(); break;
+            case '=': DEBUG("calling rollRR()"); rollRR(); break;
+            case '^': DEBUG("calling jmpne()"); jmpne(fp); break;
+            case '+': DEBUG("calling _add()"); _add(); break;
+            case '-': DEBUG("calling _sub()"); _sub(); break;
+            case '*': DEBUG("calling _mul()"); _mul(); break;
+            case '/': DEBUG("calling _div()"); _div(); break;
+            default: DEBUG("nothing happening"); break;
         }
         DEBUG("\n");
     }
 
     fclose(fp);
+
+    DEBUG("X = 0x%lX ; Y = 0x%lX ; Z = 0x%lX\n", regX, regY, regZ);
+
     return 0;
 }

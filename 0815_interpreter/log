@@ -1,2 +1,196 @@
 Got '<', calling push()
-FATAL: Push was called, but no value was provided at character 3
+push(): got char '4'
+push(): got char '8'
+push(): final value is 0x48(72)
+push(): X => 0x0000000000000000000000000000000000000000000000000000000000000048
+Got 'x', calling swap()
+swap(): X <=> Y
+Got '<', calling push()
+push(): got char '6'
+push(): got char '5'
+push(): final value is 0x65(101)
+push(): X => 0x0000000000000000000000000000000000000000000000000000000000000065
+Got '=', calling rollRR()
+rollRR(): tmp = Y
+rollRR(): X = Z
+rollRR(): Y = X
+rollRR(): Z = tmp
+Got '<', calling push()
+push(): got char '6'
+push(): got char 'C'
+push(): final value is 0x6c(108)
+push(): X => 0x000000000000000000000000000000000000000000000000000000000000006c
+Got '$', calling _putc()
+_putc(): putchar(regZ % 256)
+Got '=', calling rollRR()
+rollRR(): tmp = Y
+rollRR(): X = Z
+rollRR(): Y = X
+rollRR(): Z = tmp
+Got '$', calling _putc()
+_putc(): putchar(regZ % 256)
+Got '=', calling rollRR()
+rollRR(): tmp = Y
+rollRR(): X = Z
+rollRR(): Y = X
+rollRR(): Z = tmp
+Got '$', calling _putc()
+_putc(): putchar(regZ % 256)
+Got '$', calling _putc()
+_putc(): putchar(regZ % 256)
+Got '~', calling rollRL()
+rollRL(): tmp = X
+rollRL(): X = Y
+rollRL(): Y = Z
+rollRL(): Z = tmp
+Got '<', calling push()
+push(): got char '0'
+push(): got char '3'
+push(): final value is 0x3(3)
+push(): X => 0x0000000000000000000000000000000000000000000000000000000000000003
+Got '+', calling _add()
+_add(): Z = X + Y
+Got '$', calling _putc()
+_putc(): putchar(regZ % 256)
+Got '~', calling rollRL()
+rollRL(): tmp = X
+rollRL(): X = Y
+rollRL(): Y = Z
+rollRL(): Z = tmp
+Got '<', calling push()
+push(): got char 'f'
+push(): got char 'f'
+push(): got char 'f'
+push(): got char 'f'
+push(): got char 'f'
+push(): got char 'f'
+push(): got char 'f'
+push(): got char 'f'
+push(): got char 'f'
+push(): got char 'f'
+push(): got char 'f'
+push(): got char 'f'
+push(): got char 'f'
+push(): got char 'f'
+push(): got char 'b'
+push(): got char 'd'
+push(): final value is 0xffffffffffffffbd(18446744073709551549)
+push(): X => 0x000000000000000000000000000000000000000000000000ffffffffffffffbd
+Got '+', calling _add()
+_add(): Z = X + Y
+Got '$', calling _putc()
+_putc(): putchar(regZ % 256)
+Got '<', calling push()
+push(): got char 'f'
+push(): got char 'f'
+push(): got char 'f'
+push(): got char 'f'
+push(): got char 'f'
+push(): got char 'f'
+push(): got char 'f'
+push(): got char 'f'
+push(): got char 'f'
+push(): got char 'f'
+push(): got char 'f'
+push(): got char 'f'
+push(): got char 'f'
+push(): got char 'f'
+push(): got char 'b'
+push(): got char '1'
+push(): final value is 0xffffffffffffffb1(18446744073709551537)
+push(): X => 0x000000000000000000000000000000000000000000000000ffffffffffffffb1
+Got '+', calling _add()
+_add(): Z = X + Y
+Got '$', calling _putc()
+_putc(): putchar(regZ % 256)
+Got '<', calling push()
+push(): got char '5'
+push(): got char '7'
+push(): final value is 0x57(87)
+push(): X => 0x0000000000000000000000000000000000000000000000000000000000000057
+Got '~', calling rollRL()
+rollRL(): tmp = X
+rollRL(): X = Y
+rollRL(): Y = Z
+rollRL(): Z = tmp
+Got '$', calling _putc()
+_putc(): putchar(regZ % 256)
+Got '~', calling rollRL()
+rollRL(): tmp = X
+rollRL(): X = Y
+rollRL(): Y = Z
+rollRL(): Z = tmp
+Got '<', calling push()
+push(): got char '1'
+push(): got char '8'
+push(): final value is 0x18(24)
+push(): X => 0x0000000000000000000000000000000000000000000000000000000000000018
+Got 'x', calling swap()
+swap(): X <=> Y
+Got '+', calling _add()
+_add(): Z = X + Y
+Got '$', calling _putc()
+_putc(): putchar(regZ % 256)
+Got '~', calling rollRL()
+rollRL(): tmp = X
+rollRL(): X = Y
+rollRL(): Y = Z
+rollRL(): Z = tmp
+Got '<', calling push()
+push(): got char '0'
+push(): got char '3'
+push(): final value is 0x3(3)
+push(): X => 0x0000000000000000000000000000000000000000000000000000000000000003
+Got '+', calling _add()
+_add(): Z = X + Y
+Got '$', calling _putc()
+_putc(): putchar(regZ % 256)
+Got '~', calling rollRL()
+rollRL(): tmp = X
+rollRL(): X = Y
+rollRL(): Y = Z
+rollRL(): Z = tmp
+Got '<', calling push()
+push(): got char '0'
+push(): got char '6'
+push(): final value is 0x6(6)
+push(): X => 0x0000000000000000000000000000000000000000000000000000000000000006
+Got 'x', calling swap()
+swap(): X <=> Y
+Got '-', calling _sub()
+_sub(): Z = X - Y
+Got '$', calling _putc()
+_putc(): putchar(regZ % 256)
+Got 'x', calling swap()
+swap(): X <=> Y
+Got '<', calling push()
+push(): got char '0'
+push(): got char 'e'
+push(): final value is 0xe(14)
+push(): X => 0x000000000000000000000000000000000000000000000000000000000000000e
+Got 'x', calling swap()
+swap(): X <=> Y
+Got '-', calling _sub()
+_sub(): Z = X - Y
+Got '$', calling _putc()
+_putc(): putchar(regZ % 256)
+Got '=', calling rollRR()
+rollRR(): tmp = Y
+rollRR(): X = Z
+rollRR(): Y = X
+rollRR(): Z = tmp
+Got 'x', calling swap()
+swap(): X <=> Y
+Got '<', calling push()
+push(): got char '4'
+push(): got char '3'
+push(): final value is 0x43(67)
+push(): X => 0x0000000000000000000000000000000000000000000000000000000000000043
+Got 'x', calling swap()
+swap(): X <=> Y
+Got '-', calling _sub()
+_sub(): Z = X - Y
+Got '$', calling _putc()
+_putc(): putchar(regZ % 256)
+X = 0x64 ; Y = 0x43 ; Z = 0x21
+H\u0000HHK\x08\xFCWorld!
