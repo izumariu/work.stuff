@@ -19,7 +19,10 @@
 }
 
 /* PRIVATE */ void pushLabel(char* label, uint16_t offset) {
-    labels.list = realloc(labels.list, sizeof(_label) * ++labels.length);
+    if(!labels.list)
+        labels.list = malloc(sizeof(_label) * ++labels.length);
+    else
+        labels.list = realloc(labels.list, sizeof(_label) * ++labels.length);
     labels.list[labels.length - 1] = createLabel(label, offset);
 }
 
@@ -34,7 +37,7 @@
 
 }
 
-void push(FILE* fp) {
+void push() {
     int64_t buf = 0;
     uint8_t length;
     char charbuf = fgetc(fp);
@@ -44,34 +47,34 @@ void push(FILE* fp) {
     for(length = 0; length <= 64; length++) {
         charbuf = fgetc(fp);
         if(charbuf == ':') break;
-        DEBUG("\npush(): got char '%c'", charbuf);
+        DEBUG("push(): got char '%c'\n", charbuf);
         buf = (buf * 16) + hexCharToDec(charbuf);
     }
 
     if(length == 0) {
-        ERROR_POS("\nFATAL: Push was called, but no value was provided");
+        ERROR_POS("ERROR: Push was called, but no value was provided");
         exit(1);
     } else if(length == 64) {
         if(fgetc(fp) != ':' && charbuf != ':') {
-            ERROR_POS("\nFATAL: Overflow of value found");
+            ERROR_POS("FATAL: Overflow of value found");
             exit(1);
         }
     }
 
-    DEBUG("\npush(): final value is 0x%lx(%lu)", buf, buf);
+    DEBUG("push(): final value is 0x%lx(%lu)\n", buf, buf);
     regX = buf;
-    DEBUG("\npush(): X => 0x%064lx", regX);
+    DEBUG("push(): X => 0x%lx\n", regX);
 
 }
 
-void swap(FILE* fp) {
+void swap() {
     int64_t temp = regX;
     regX = regY;
     regY = temp;
-    DEBUG("\nswap(): X <=> Y");
+    DEBUG("swap(): X <=> Y\n");
 }
 
-void label(FILE* fp) {
+void label() {
 
     uint16_t length = 0;
     char buf = fgetc(fp);
@@ -80,7 +83,7 @@ void label(FILE* fp) {
     char *label = calloc(1, 1); // VALUE MUST NOT BE FREE()D!!
 
     if(fgetc(fp) == ':') {
-        ERROR_POS("\nFATAL: Label was called, but no label was provided");
+        ERROR_POS("FATAL: Label was called, but no label was provided");
         exit(1);
     }
 
@@ -100,51 +103,55 @@ void label(FILE* fp) {
 }
 
 void _geti() {
-    DEBUG("\n_geti(): calling scanf(\"%%lx\", &regX)");
+    DEBUG("_geti(): calling scanf(\"%%lx\", &regX)\n");
     scanf("%lx", &regX);
 }
 
 void _getc() {
-    DEBUG("\n_getc(): calling scanf(\"%%c\", &buf)");
+    DEBUG("_getc(): calling scanf(\"%%c\", &buf)\n");
     char buf;
     scanf("%c", &buf);
-    DEBUG("\n_getc(): X = (int16_t)buf");
+    DEBUG("_getc(): X = (int16_t)buf\n");
     regX = (int16_t)buf;
 }
 
 void _puti() {
-    DEBUG("\n_puti(): printf(\"%%lx\", regZ)");
+    DEBUG("_puti(): printf(\"%%lx\", regZ)\n");
     printf("%lx", regZ);
 }
 
 void _putc() {
-    DEBUG("\n_putc(): putchar(regZ %% 256)");
+    DEBUG("_putc(): putchar(regZ %% 256)\n");
     putchar(regZ % 256);
 }
 
 void rollRL() {
-    DEBUG("\nrollRL(): tmp = X");
+    DUMP_REGS();
+    DEBUG("rollRL(): tmp = X\n");
     int64_t tmp = regX;
-    DEBUG("\nrollRL(): X = Y");
+    DEBUG("rollRL(): X = Y\n");
     regX = regY;
-    DEBUG("\nrollRL(): Y = Z");
+    DEBUG("rollRL(): Y = Z\n");
     regY = regZ;
-    DEBUG("\nrollRL(): Z = tmp");
+    DEBUG("rollRL(): Z = tmp\n");
     regZ = tmp;
+    DUMP_REGS();
 }
 
 void rollRR() {
-    DEBUG("\nrollRR(): tmp = Y");
-    int64_t tmp = regY;
-    DEBUG("\nrollRR(): X = Z");
-    regX = regZ;
-    DEBUG("\nrollRR(): Y = X");
+    DUMP_REGS();
+    DEBUG("rollRR(): tmp = Z\n");
+    int64_t tmp = regZ;
+    DEBUG("rollRR(): Z = Y\n");
+    regZ = regY;
+    DEBUG("rollRR(): Y = X\n");
     regY = regX;
-    DEBUG("\nrollRR(): Z = tmp");
-    regZ = tmp;
+    DEBUG("rollRR(): X = tmp\n");
+    regX = tmp;
+    DUMP_REGS();
 }
 
-void jmpeq(FILE* fp) {
+void jmpeq() {
 
     uint16_t length = 0;
     char buf = fgetc(fp);
@@ -153,7 +160,7 @@ void jmpeq(FILE* fp) {
     char *label = calloc(1, 1); // VALUE MUST NOT BE FREE()D!!
 
     if(fgetc(fp) == ':') {
-        ERROR_POS("\nFATAL: JumpIfNotZero was called, but no label was provided");
+        ERROR_POS("FATAL: JumpIfNotZero was called, but no label was provided");
         exit(1);
     }
 
@@ -170,16 +177,16 @@ void jmpeq(FILE* fp) {
 
     uint64_t off = findLabelOffset(fp, label);
 
-    DEBUG("\njmpeq(): found label offset at %lu", off);
+    DEBUG("jmpeq(): found label offset at %lu\n", off);
 
     if(regZ == 0) {
-        DEBUG("\njmpeq(): Z is 0, calling fseek(fp, %ld, SEEK_SET)", off);
+        DEBUG("jmpeq(): Z is 0, calling fseek(fp, %ld, SEEK_SET)\n", off);
         fseek(fp, off, SEEK_SET);
     }
 
 }
 
-void jmpne(FILE* fp) {
+void jmpne() {
 
     uint16_t length = 0;
     char buf = fgetc(fp);
@@ -188,7 +195,7 @@ void jmpne(FILE* fp) {
     char *label = calloc(1, 1); // VALUE MUST NOT BE FREE()D!!
 
     if(fgetc(fp) == ':') {
-        ERROR_POS("\nFATAL: JumpIfNotZero was called, but no label was provided");
+        ERROR_POS("FATAL: JumpIfNotZero was called, but no label was provided");
         exit(1);
     }
 
@@ -205,33 +212,166 @@ void jmpne(FILE* fp) {
 
     uint64_t off = findLabelOffset(fp, label);
 
-    DEBUG("\njmpne(): found label offset at %lu", off);
+    DEBUG("jmpne(): found label offset at %lu\n", off);
 
     if(regZ != 0) {
-        DEBUG("\njmpne(): Z is not 0, calling fseek(fp, %ld, SEEK_SET)", off);
+        DEBUG("jmpne(): Z is not 0, calling fseek(fp, %ld, SEEK_SET)\n", off);
         fseek(fp, off, SEEK_SET);
+    }
+
+}
+
+void clearQ() {
+
+    if(queue.list) {
+        DEBUG("clearQ(): calling free(queue.list)\n");
+        free(queue.list);
+    }
+
+    queue.length = 0;
+
+}
+
+void enQ() {
+
+    if(!queue.list) {
+        queue.list = malloc(++queue.length * sizeof(_queue));
+    } else {
+        queue.list = realloc(queue.list, sizeof(_queue) * ++queue.length);
+    }
+
+    queue.list[queue.length - 1] = regZ;
+
+}
+
+void deQ() {
+
+    if(!queue.list) {
+        ERROR_POS("ERROR: Requested dequeue, but queue length was 0");
+    }
+
+    regX = *(queue.list);
+
+    for(int i = 0; i <= queue.length - 2; i++) {
+        queue.list[i] = queue.list[i+1];
+    }
+
+    if(--queue.length > 0)
+        queue.list = realloc(queue.list, queue.length);
+    else
+        clearQ();
+
+}
+
+void rollQL() {
+
+    DUMP_QUEUE();
+
+    int64_t buf = 0;
+    uint8_t length;
+    char charbuf = fgetc(fp);
+
+    if(charbuf == ':') {
+        for(length = 0; length <= 64; length++) {
+            charbuf = fgetc(fp);
+            if(charbuf == ':') break;
+            DEBUG("push(): got char '%c'\n", charbuf);
+            buf = (buf * 16) + hexCharToDec(charbuf);
+        }
+
+        if(length == 0) {
+            ERROR_POS("ERROR: RollQueueLeft was called using argument syntax, but no argument was provided");
+        } else if(length == 64) {
+            if(fgetc(fp) != ':' && charbuf != ':') {
+                ERROR_POS("FATAL: Overflow of value found");
+                exit(1);
+            }
+        }
+    } else {
+        fseek(fp, -1, SEEK_CUR);
+        buf = 1;
+    }
+
+    int64_t tmp;
+
+    for(int64_t times = 0; times < buf; times++) {
+
+        tmp = *(queue.list);
+
+        for(int i = 0; i <= queue.length - 2; i++)
+            queue.list[i] = queue.list[i+1];
+
+        queue.list[queue.length - 1] = tmp;
+        DUMP_QUEUE();
+
+    }
+
+}
+
+void rollQR() {
+
+    DUMP_QUEUE();
+
+    int64_t buf = 0;
+    uint8_t length;
+    char charbuf = fgetc(fp);
+
+    if(charbuf == ':') {
+        for(length = 0; length <= 64; length++) {
+            charbuf = fgetc(fp);
+            if(charbuf == ':') break;
+            DEBUG("push(): got char '%c'\n", charbuf);
+            buf = (buf * 16) + hexCharToDec(charbuf);
+        }
+
+        if(length == 0) {
+            ERROR_POS("ERROR: RollQueueLeft was called using argument syntax, but no argument was provided");
+        } else if(length == 64) {
+            if(fgetc(fp) != ':' && charbuf != ':') {
+                ERROR_POS("FATAL: Overflow of value found");
+                exit(1);
+            }
+        }
+    } else {
+        fseek(fp, -1, SEEK_CUR);
+        buf = 1;
+    }
+
+    int64_t tmp;
+
+    for(int64_t times = 0; times < buf; times++) {
+
+        tmp = queue.list[queue.length-1];
+
+        for(int i = queue.length - 2; i >= 0; i--)
+            queue.list[i+1] = queue.list[i];
+
+        *(queue.list) = tmp;
+
+        DUMP_QUEUE();
+
     }
 
 }
 
 void _add() {
-    DEBUG("\n_add(): Z = X + Y");
+    DEBUG("_add(): Z = X + Y\n");
     regZ = regX + regY;
 }
 
 void _sub() {
-    DEBUG("\n_sub(): Z = X - Y");
+    DEBUG("_sub(): Z = X - Y\n");
     regZ = regX - regY;
 }
 
 void _mul() {
-    DEBUG("\n_mul(): Z = X * Y");
+    DEBUG("_mul(): Z = X * Y\n");
     regZ = regX * regY;
 }
 
 void _div() {
-    DEBUG("\n_div(): Z = X / Y");
+    DEBUG("_div(): Z = X / Y\n");
     regZ = regX / regY;
-    DEBUG("\n_div(): Y = X %% Y");
+    DEBUG("_div(): Y = X %% Y\n");
     regY = regX % regY;
 }

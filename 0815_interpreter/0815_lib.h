@@ -11,6 +11,9 @@
 #define DEBUG(m...) asm("nop")
 #endif
 
+#define DUMP_REGS() DEBUG("X = 0x%lX ; Y = 0x%lX ; Z = 0x%lX\n", regX, regY, regZ)
+#define DUMP_QUEUE() for(int __queue__dump__index__=0;__queue__dump__index__<queue.length;__queue__dump__index__++){DEBUG("%lX ", queue.list[__queue__dump__index__]);}; DEBUG("\n");
+
 #define ERROR(args...) fprintf(stderr, args)
 #define ERROR_POS(args...) fprintf(stderr, "%s at character %lu\n", args, ftell(fp))
 
@@ -24,25 +27,32 @@ typedef struct {
     uint16_t length;
 } _labelList;
 
+typedef struct {
+    int64_t* list;
+    uint16_t length;
+} _queue;
+
 extern int64_t regX, regY, regZ;
 extern _labelList labels;
+extern _queue queue;
+extern FILE* fp;
 
-extern void push(FILE*);
-extern void swap(FILE*);
-extern void label(FILE*);
+extern void push();
+extern void swap();
+extern void label();
 extern void _geti();
 extern void _getc();
 extern void _puti();
 extern void _putc();
 extern void rollRL();
 extern void rollRR();
-extern void jmpeq(FILE*);
-extern void jmpne(FILE*);
-extern void clearq();
+extern void jmpeq();
+extern void jmpne();
+extern void clearQ();
 extern void enQ();
 extern void deQ();
-extern void rollQL(FILE*);
-extern void rollQR(FILE*);
+extern void rollQL();
+extern void rollQR();
 extern void _add();
 extern void _sub();
 extern void _mul();

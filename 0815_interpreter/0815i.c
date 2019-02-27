@@ -5,10 +5,13 @@
 
 int64_t regX = 0, regY = 0, regZ = 0;
 _labelList labels;
+_queue queue;
+FILE* fp;
 
 int main(int argc, char** argv) {
 
     labels.length = 0;
+    queue.length = 0;
 
     char bufc;
 
@@ -17,7 +20,7 @@ int main(int argc, char** argv) {
         return 1;
     }
 
-    FILE* fp = fopen(argv[1], "r");
+    fp = fopen(argv[1], "r");
 
     if(!fp) {
         ERROR("File '%s' could not be found or opened for reading\n", argv[1]);
@@ -31,35 +34,40 @@ int main(int argc, char** argv) {
 
         #ifdef __DEBUG__
         if(bufc < 32)
-            DEBUG("Got %3d, ", bufc);
+            DEBUG("Got ASCII %3d, ", bufc);
         else
             DEBUG("Got '%c', ", bufc);
         #endif
 
         switch(bufc) {
-            case '<': DEBUG("calling push()"); push(fp); break;
-            case 'x': DEBUG("calling swap()"); swap(fp); break;
-            case 'X': DEBUG("calling swap()"); swap(fp); break;
-            case '}': DEBUG("calling label()"); label(fp); break;
-            case '|': DEBUG("calling _geti()"); _geti(); break;
-            case '!': DEBUG("calling _getc()"); _getc(); break;
-            case '%': DEBUG("calling _puti()"); _puti(); break;
-            case '$': DEBUG("calling _putc()"); _putc(); break;
-            case '~': DEBUG("calling rollRL()"); rollRL(); break;
-            case '=': DEBUG("calling rollRR()"); rollRR(); break;
-            case '^': DEBUG("calling jmpne()"); jmpne(fp); break;
-            case '+': DEBUG("calling _add()"); _add(); break;
-            case '-': DEBUG("calling _sub()"); _sub(); break;
-            case '*': DEBUG("calling _mul()"); _mul(); break;
-            case '/': DEBUG("calling _div()"); _div(); break;
-            default: DEBUG("nothing happening"); break;
+            case '<': DEBUG("calling push()\n");   push();    break;
+            case 'x': DEBUG("calling swap()\n");   swap();    break;
+            case 'X': DEBUG("calling swap()\n");   swap();    break;
+            case '}': DEBUG("calling label()\n");  label();   break;
+            case '|': DEBUG("calling _geti()\n");  _geti();   break;
+            case '!': DEBUG("calling _getc()\n");  _getc();   break;
+            case '%': DEBUG("calling _puti()\n");  _puti();   break;
+            case '$': DEBUG("calling _putc()\n");  _putc();   break;
+            case '~': DEBUG("calling rollRL()\n"); rollRL();  break;
+            case '=': DEBUG("calling rollRR()\n"); rollRR();  break;
+            case '#': DEBUG("calling jmpeq()\n");  jmpeq();   break;
+            case '^': DEBUG("calling jmpne()\n");  jmpne();   break;
+            case '?': DEBUG("calling clearQ()\n"); clearQ();  break;
+            case '>': DEBUG("calling enQ()\n");    enQ();     break;
+            case '{': DEBUG("calling deQ()\n");    deQ();     break;
+            case '@': DEBUG("calling rollQL()\n"); rollQL();  break;
+            case '&': DEBUG("calling rollQR()\n"); rollQR();  break;
+            case '+': DEBUG("calling _add()\n");   _add();    break;
+            case '-': DEBUG("calling _sub()\n");   _sub();    break;
+            case '*': DEBUG("calling _mul()\n");   _mul();    break;
+            case '/': DEBUG("calling _div()\n");   _div();    break;
+            default: DEBUG("nothing happening\n");            break;
         }
-        DEBUG("\n");
     }
 
     fclose(fp);
 
-    DEBUG("X = 0x%lX ; Y = 0x%lX ; Z = 0x%lX\n", regX, regY, regZ);
+    DUMP_REGS();
 
     return 0;
 }
