@@ -1,0 +1,168 @@
+#!/usr/bin/ruby
+
+unless ARGV.length == 1
+    abort "USAGE: #{__FILE__} [CHEF FILE]"
+end
+
+$HEADER = <<END_OF_HEADER
+#include <stdio.h>
+#include <stdlib.h>
+#include <stdint.h>
+
+#define ERROR(m...) fprintf(stderr, "%s\n", m)
+
+enum { DRY=0, LIQUID };
+
+typedef struct {
+	int64_t value;
+	uint8_t state : 1;
+} ingredient;
+
+typedef struct {
+    ingredient* stack;
+    uint16_t length;
+} bowl;
+
+ingredient Ingredient(int64_t val, uint8_t state) {
+
+    ingredient r;
+	r.value = val;
+
+	if(state != 0 && state != 1) {
+
+    	ERROR("State must be either DRY(0) or LIQUID(1)");
+		exit(1);
+
+    }
+
+	return r;
+
+}
+
+void mbput(bowl b, ingredient i) {
+
+    if(!b.stack)
+        b.stack = malloc( sizeof(ingredient) * ++b.length );
+    else
+        b.stack = realloc( b.stack, sizeof(ingredient) * ++b.length );
+
+    for(int el = b.length - 2; el >= 0; el--)
+        b.stack[el+1] = b.stack[el]
+
+    *(b.stack) = i;
+
+}
+
+void mbfold(bowl b, ingredient i) {
+
+    if(!b.stack) {
+
+        ERROR("Tried to remove ingredient from bowl, but bowl was already empty");
+        exit(1);
+
+    }
+
+    i.value = *(b.stack);
+
+    for(int el = 0; el <= b.length - 2; el++)
+        b.stack[el] = b.stack[el - 1];
+
+    b.stack = realloc(b.stack, sizeof(ingredient) * --b.length);
+
+}
+
+void mbadd(bowl b, ingredient i) {
+
+    ingredient toAdd = Ingredient(
+        *(b.stack).value + i.value,
+        ( *(b.stack).state == DRY && i.state == DRY ) ? DRY : LIQUID
+    );
+
+    mbput(b, toAdd);
+
+}
+
+void mbremove(bowl b, ingredient i) {
+
+    ingredient toAdd = Ingredient(
+        *(b.stack).value - i.value,
+        ( *(b.stack).state == DRY && i.state == DRY ) ? DRY : LIQUID
+    );
+
+    mbput(b, toAdd);
+
+}
+
+void mbcombine(bowl b, ingredient i) {
+
+    ingredient toAdd = Ingredient(
+        *(b.stack).value * i.value,
+        ( *(b.stack).state == DRY && i.state == DRY ) ? DRY : LIQUID
+    );
+
+    mbput(b, toAdd);
+
+}
+
+void mbdivide(bowl b, ingredient i) {
+
+    ingredient toAdd = Ingredient(
+        *(b.stack).value / i.value,
+        ( *(b.stack).state == DRY && i.state == DRY ) ? DRY : LIQUID
+    );
+
+    mbput(b, toAdd);
+
+}
+
+void mbadddry(bowl b) {
+
+    mbput( b, $$ALL_DRY_INGREDIENTS_ADDED$$ );
+
+}
+
+void mbliquefy(bowl b) {
+
+    for(int i = 0; i < b.length; b++)
+        b.stack[i].state = LIQUID;
+
+}
+
+void liquefy(ingredient i) {
+    i.state = LIQUID;
+}
+
+void mbstir(bowl b, uint8_t times) {
+
+    times %= b.length;
+
+    if(times == 0) return;
+
+    ingredient temp;
+
+    for(int i = 0; i <= times - 1; i++) {
+        temp = b.stack[(i+1)%b.length];
+        b.stack[(i+1)%b.length] = b.stack[i%b.length];
+        b.stack[i%b.length] = temp;
+    }
+
+}
+
+
+
+END_OF_HEADER
+
+# PARSING BEGIN
+
+$content = open(ARGV[0], &:read).split(/\s*(\r?\n){2,}\s*/)#.map(&:strip)
+p $content
+
+exit
+# PARSING END
+
+$HEADER.gsub!(/\$\$([^\$]+)\$\$/) { |macro|
+    case $1
+    when "ALL_DRY_INGREDIENTS_ADDED"
+        ingredients.select{|i|i[1] == "dry"}.map{|i| "#{i[0]}.value" }.join(" + ")
+    end
+}
