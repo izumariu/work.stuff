@@ -8,6 +8,7 @@ $HEADER = <<END_OF_HEADER
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
+#include <time.h>
 
 #define ERROR(m...) fprintf(stderr, "%s\n", m)
 
@@ -23,6 +24,8 @@ typedef struct {
     uint16_t length;
 } bowl;
 
+typedef bakingDish bowl;
+
 ingredient Ingredient(int64_t val, uint8_t state) {
 
     ingredient r;
@@ -37,6 +40,12 @@ ingredient Ingredient(int64_t val, uint8_t state) {
 
 	return r;
 
+}
+
+void swapIngredients(ingredient* a, ingredient* b) {
+    ingredient temp = *a;
+    *a = *b;
+    *b = temp;
 }
 
 void mbput(bowl b, ingredient i) {
@@ -141,20 +150,57 @@ void mbstir(bowl b, uint8_t times) {
     ingredient temp;
 
     for(int i = 0; i <= times - 1; i++) {
-        temp = b.stack[(i+1)%b.length];
-        b.stack[(i+1)%b.length] = b.stack[i%b.length];
-        b.stack[i%b.length] = temp;
+        swapIngredients(
+            &(b.stack[i%b.length]),
+            &(b.stack[(i+1)%b.length])
+        );
     }
 
 }
 
+void mbmix(bowl b) {
 
+    srandom(time(NULL));
+
+    for(int i = 0; i < b.length; i++) {
+        swapIngredients(
+            &(b[i]),
+            &(b.stack[random() % b.length])
+        );
+    }
+
+}
+
+void mbclean(bowl b) {
+
+    b.length = 0;
+    free(b.stack);
+
+}
+
+void mbpour(bowl b, bakingDish p) {
+
+    p.length += b.length;
+    if(!p.stack)
+        p.stack = malloc(sizeof(ingredient) * p.length);
+    else
+        p.stack = realloc(p.stack, sizeof(ingredient) * p.length);
+
+    for(int b_ex = 0; b_ex < b.length; b_ex++)
+        for(int el = 0; el <= b.length - 2; el++)
+            p.stack[el] = p.stack[el - 1];
+
+    for(int el = 0; el < b.length; el++)
+        p.stack[el] = b.stack[el];
+
+}
 
 END_OF_HEADER
 
 # PARSING BEGIN
 
-$content = open(ARGV[0], &:read).split(/\s*(\r?\n){2,}\s*/)#.map(&:strip)
+$content = open(ARGV[0], &:read).split("\n\n").map(&:strip)
+
 p $content
 
 exit
