@@ -10,7 +10,9 @@ $HEADER = <<END_OF_HEADER
 #include <stdint.h>
 #include <time.h>
 
-#define ERROR(m...) fprintf(stderr, "%s\n", m)
+$$DESCRIPTION$$
+
+#define ERROR(m...) fprintf(stderr, "%s\\n", m)
 
 enum { DRY=0, LIQUID };
 
@@ -24,16 +26,16 @@ typedef struct {
     uint16_t length;
 } bowl;
 
-typedef bakingDish bowl;
+typedef bowl bakingDish;
 
 ingredient Ingredient(int64_t val, uint8_t state) {
 
-    ingredient r;
+  ingredient r;
 	r.value = val;
 
 	if(state != 0 && state != 1) {
 
-    	ERROR("State must be either DRY(0) or LIQUID(1)");
+    ERROR("State must be either DRY(0) or LIQUID(1)");
 		exit(1);
 
     }
@@ -56,7 +58,7 @@ void mbput(bowl b, ingredient i) {
         b.stack = realloc( b.stack, sizeof(ingredient) * ++b.length );
 
     for(int el = b.length - 2; el >= 0; el--)
-        b.stack[el+1] = b.stack[el]
+        b.stack[el+1] = b.stack[el];
 
     *(b.stack) = i;
 
@@ -71,7 +73,7 @@ void mbfold(bowl b, ingredient i) {
 
     }
 
-    i.value = *(b.stack);
+    i.value = b.stack[0].value;
 
     for(int el = 0; el <= b.length - 2; el++)
         b.stack[el] = b.stack[el - 1];
@@ -82,57 +84,31 @@ void mbfold(bowl b, ingredient i) {
 
 void mbadd(bowl b, ingredient i) {
 
-    ingredient toAdd = Ingredient(
-        *(b.stack).value + i.value,
-        ( *(b.stack).state == DRY && i.state == DRY ) ? DRY : LIQUID
-    );
-
-    mbput(b, toAdd);
+    b.stack[0].value += i.value;
 
 }
 
 void mbremove(bowl b, ingredient i) {
 
-    ingredient toAdd = Ingredient(
-        *(b.stack).value - i.value,
-        ( *(b.stack).state == DRY && i.state == DRY ) ? DRY : LIQUID
-    );
-
-    mbput(b, toAdd);
+    b.stack[0].value -= i.value;
 
 }
 
 void mbcombine(bowl b, ingredient i) {
 
-    ingredient toAdd = Ingredient(
-        *(b.stack).value * i.value,
-        ( *(b.stack).state == DRY && i.state == DRY ) ? DRY : LIQUID
-    );
-
-    mbput(b, toAdd);
+    b.stack[0].value *= i.value;
 
 }
 
 void mbdivide(bowl b, ingredient i) {
 
-    ingredient toAdd = Ingredient(
-        *(b.stack).value / i.value,
-        ( *(b.stack).state == DRY && i.state == DRY ) ? DRY : LIQUID
-    );
-
-    mbput(b, toAdd);
-
-}
-
-void mbadddry(bowl b) {
-
-    mbput( b, $$ALL_DRY_INGREDIENTS_ADDED$$ );
+    b.stack[0].value /= i.value;
 
 }
 
 void mbliquefy(bowl b) {
 
-    for(int i = 0; i < b.length; b++)
+    for(int i = 0; i < b.length; i++)
         b.stack[i].state = LIQUID;
 
 }
@@ -164,7 +140,7 @@ void mbmix(bowl b) {
 
     for(int i = 0; i < b.length; i++) {
         swapIngredients(
-            &(b[i]),
+            &(b.stack[i]),
             &(b.stack[random() % b.length])
         );
     }
@@ -199,16 +175,49 @@ END_OF_HEADER
 
 # PARSING BEGIN
 
-$content = open(ARGV[0], &:read).split("\n\n").map(&:strip)
+$content = open(ARGV[0], &:read)
+$content.gsub!(/Pre-heat\s+oven\s+to\s+\d+\s+degrees\s+Celsius\.|Cooking\s+time:\s+\d+\s+minutes\./, "")
 
-p $content
+CRLF = $content[$content.index(?\n)-1] == ?\r
 
-exit
+$content = (CRLF ? $content.split("\r\n\r\n") : $content.split("\n\n")).map(&:strip)
+
+CMethod = Struct.new(*(%w(name vars content).map(&:to_sym)))
+
+cmethods = [ ]
+
+while $content.select{ |i| i.match(/Ingredients\.\n/m) != nil }
+
+  ingr_start = $content.map{ |i| i.match(/Ingredients\.\n/m) != nil }.index(true)
+
+  the_method = CMethod.new(cmethods == [] ? "main" : "", [], []) # TODO METHOD NAME!!
+
+  ingredients = $content[ingr_start].scan(
+    /(\d+)\s+((?:heaped\s+|level\s+)?(?:k?g|pinch(?:es)?|m?l|dash(?:es)?|(?:cup|teaspoon|tablespoon)s?)\s+)?([^0-9\r\n]+)/
+  )
+  ingredients.map!{|i| [ i[0].strip.to_i, (i[1].to_s.match(/m?l|dash(?:es)?/) ? "liquid" : "dry"), i[2].strip.gsub(/[^A-Za-z0-9]+/, ?_) ] }
+
+
+  the_method.vars = ingredients
+  cmethods << the_method
+
+end
+
+#abort ingredients.inspect
+
 # PARSING END
 
 $HEADER.gsub!(/\$\$([^\$]+)\$\$/) { |macro|
     case $1
     when "ALL_DRY_INGREDIENTS_ADDED"
-        ingredients.select{|i|i[1] == "dry"}.map{|i| "#{i[0]}.value" }.join(" + ")
+      ingredients.select{|i|i[1] == "dry"}.map{|i| "#{i[2]}.value" }.join(" + ")
+    when "DESCRIPTION"
+      if $content[1].match(/^Ingredients\.\s*\n/m)
+        String.new
+      else
+        $content[1].split(?\n).map{|i| "// #{i}" }.join("\n")
+      end
     end
 }
+
+puts $HEADER
