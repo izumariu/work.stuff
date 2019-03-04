@@ -175,42 +175,81 @@ END_OF_HEADER
 
 # PARSING BEGIN
 
+def normalize_ingredient(ingr)
+  ingr.strip.gsub(/[^A-Za-z0-9]+/,?_)
+end
+
+def normalize_method(m)
+  m.strip.gsub(/\s+[A-Za-z0-9]/){|i|i[-1].upcase}
+end
+
 $content = open(ARGV[0], &:read)
 $content.gsub!(/Pre-heat\s+oven\s+to\s+\d+\s+degrees\s+Celsius\.|Cooking\s+time:\s+\d+\s+minutes\./, "")
 
 CRLF = $content[$content.index(?\n)-1] == ?\r
 
-$content = (CRLF ? $content.split("\r\n\r\n") : $content.split("\n\n")).map(&:strip)
+$content = (CRLF ? $content.split("\r\n\r\n") : $content.split("\n\n")).map(&:strip).select!{|i| i != "" }
 
 CMethod = Struct.new(*(%w(name vars content).map(&:to_sym)))
 
 cmethods = [ ]
 
-while $content.select{ |i| i.match(/Ingredients\.\n/m) != nil }
+while $content.select{ |i| i.match(/Ingredients\.\n/m) != nil }.length > 0
 
   ingr_start = $content.map{ |i| i.match(/Ingredients\.\n/m) != nil }.index(true)
 
-  the_method = CMethod.new(cmethods == [] ? "main" : "", [], []) # TODO METHOD NAME!!
+  the_method = CMethod.new(cmethods == [] ? "main" : $content[ingr_start-1].strip[0..-2], [], []) # TODO METHOD NAME!!
 
   ingredients = $content[ingr_start].scan(
     /(\d+)\s+((?:heaped\s+|level\s+)?(?:k?g|pinch(?:es)?|m?l|dash(?:es)?|(?:cup|teaspoon|tablespoon)s?)\s+)?([^0-9\r\n]+)/
   )
-  ingredients.map!{|i| [ i[0].strip.to_i, (i[1].to_s.match(/m?l|dash(?:es)?/) ? "liquid" : "dry"), i[2].strip.gsub(/[^A-Za-z0-9]+/, ?_) ] }
-
-
+  ingredients.map!{|i| [ i[0].strip.to_i, (i[1].to_s.match(/m?l|dash(?:es)?/) ? "liquid" : "dry"), normalize_ingredient(i[2]) ] }
   the_method.vars = ingredients
+
+  method_start = $content.map{ |i| i.match(/Method\.\n/m) != nil }.index(true)
+
+  if method_start < ingr_start
+    abort "In #{the_method.name}(): Method before ingredient list"
+  end
+
+  method_list = $content[method_start].split(CRLF ? "\r\n" : "\n")[1..-1].map(&:strip)
+
+  method_list.map! do |i|
+
+    case i
+
+    when /Put\s+(.*)\s+into\s+the\s+([0-9]+(?:st|nd|th)\s+)?mixing\s+bowl\./
+        _ingr = $1
+        _bowl = $2
+        "mbput(#{_bowl == nil ? "mixingBowl0" : "mixingBowl#{_bowl.match(/^\d+/)}"}, #{normalize_ingredient _ingr});"
+
+    when /Fold\s+(.*)\s+into\s+the\s+([0-9]+(?:st|nd|th)\s+)?mixing\s+bowl\./
+        _ingr = $1
+        _bowl = $2
+        "mbfold(#{_bowl == nil ? "mixingBowl0" : "mixingBowl#{_bowl.match(/^\d+/)}"}, #{normalize_ingredient _ingr});"
+
+    when /Take\s+(.*)\s+from\s+refrigerator\./
+        _ingr = $1
+        "scanf(\"%ld\", &(#{normalize_ingredient _ingr}.value));"
+
+    end
+
+  end
+
+  abort method_list.select{|i|i}.join(?\n)
+
+  the_method.name = normalize_method the_method.name
   cmethods << the_method
+  $content = $content[method_start+1..-1]
 
 end
 
-#abort ingredients.inspect
+abort cmethods.map(&:inspect).join(?\n)
 
 # PARSING END
 
 $HEADER.gsub!(/\$\$([^\$]+)\$\$/) { |macro|
     case $1
-    when "ALL_DRY_INGREDIENTS_ADDED"
-      ingredients.select{|i|i[1] == "dry"}.map{|i| "#{i[2]}.value" }.join(" + ")
     when "DESCRIPTION"
       if $content[1].match(/^Ingredients\.\s*\n/m)
         String.new
